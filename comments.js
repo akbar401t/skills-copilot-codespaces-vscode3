@@ -1,57 +1,58 @@
-//create web server
-//create a server
-var http = require('http');
-var url = require('url');
-var querystring = require('querystring');
+// Create web server
+var express = require('express');
+var app = express();
+var bodyParser = require('body-parser');
 var fs = require('fs');
-var server = http.createServer(function(req, res) {
-    var postData = '';
-    req.on('data', function(chunk) {
-        postData += chunk;
-    });
 
-    req.on('end', function() {
-        var pathname = url.parse(req.url).pathname;
-        var query = url.parse(req.url).query;
-        if (pathname === '/comment') {
-            var comment = querystring.parse(postData).comment;
-            fs.appendFile('comments.txt', comment + '\n', function(err) {
-                if (err) {
-                    res.end('error');
-                } else {
-                    res.end('success');
-                }
-            });
+// Parse HTTP request body
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
+// Serve static files
+app.use(express.static('public'));
+
+// Listen for HTTP GET requests
+app.get('/comments', function(req, res) {
+    console.log('GET request received at /comments');
+    // Read comments from file
+    fs.readFile('comments.json', function(err, data) {
+        if (err) {
+            console.log(err);
+            res.send('Error reading comments');
         } else {
-            fs.readFile('comments.txt', function(err, data) {
+            // Send comments as JSON
+            res.send(data);
+        }
+    });
+});
+
+// Listen for HTTP POST requests
+app.post('/comments', function(req, res) {
+    console.log('POST request received at /comments');
+    // Read comments from file
+    fs.readFile('comments.json', function(err, data) {
+        if (err) {
+            console.log(err);
+            res.send('Error reading comments');
+        } else {
+            // Parse comments as JSON
+            var comments = JSON.parse(data);
+            // Add new comment
+            comments.push(req.body);
+            // Write comments to file
+            fs.writeFile('comments.json', JSON.stringify(comments), function(err) {
                 if (err) {
-                    res.end('error');
+                    console.log(err);
+                    res.send('Error writing comments');
                 } else {
-                    res.end(data);
+                    res.send('Comment added');
                 }
             });
         }
     });
 });
-server.listen(3000, function() {
-    console.log('server is running at port 3000');
+
+// Start web server on port 3000
+app.listen(3000, function() {
+    console.log('Web server listening on port 3000');
 });
-//run the server and open the browser and type http://localhost:3000/comments.txt
-//enter some comments
-//open the file comments.txt and check the comments
-//open the browser and type http://localhost:3000/comment?comment=hello
-//check the comments.txt file and check the comments
-//open the browser and type http://localhost:3000/comment?comment=how%20are%20you
-//check the comments.txt file and check the comments
-//open the browser and type http://localhost:3000/comment?comment=good
-//check the comments.txt file and check the comments
-//open the browser and type http://localhost:3000/comment?comment=bad
-//check the comments.txt file and check the comments
-//open the browser and type http://localhost:3000/comment?comment=ok
-//check the comments.txt file and check the comments
-//open the browser and type http://localhost:3000/comment?comment=bye
-//check the comments.txt file and check the comments
-//open the browser and type http://localhost:3000/comment?comment=goodbye
-//check the comments.txt file and check the comments
-//open the browser and type http://localhost:3000/comment?comment=goodnight
-//check
